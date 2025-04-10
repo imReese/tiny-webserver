@@ -24,38 +24,39 @@
 #include <time.h>
 #include "../log/log.h"
 
-class util_timer;
+class UtilTimer;
 
-struct client_data {
+struct ClientData {
     sockaddr_in address;
     int sockfd;
-    util_timer* timer;
+    UtilTimer* timer;
 };
 
-class util_timer {
+class UtilTimer {
 public:
-    util_timer() : prev(NULL), next(NULL) {}
+    UtilTimer() : prev(NULL), next(NULL) {}
 
     time_t expire;
 
-    void (*cb_func)(client_data*);
-    client_data* user_data;
-    util_timer* prev;
-    util_timer* next;
+    void (*cb_func)(ClientData*);
+    ClientData* user_data;
+    UtilTimer* prev;
+    UtilTimer* next;
 };
 
-class sort_timer_lst {
+class SortTimerLst {
 private:
-    void add_timer(util_timer* timer, util_timer* lst_head);
-    util_timer* head;
-    util_timer* tail;
-public:
-    sort_timer_lst();
-    ~sort_timer_lst();
+    void add_timer(UtilTimer* timer, UtilTimer* lst_head);
+    UtilTimer* m_head;
+    UtilTimer* m_tail;
 
-    void add_timer(util_timer* timer);
-    void adjust_timer(util_timer* timer);
-    void del_timer(util_timer* timer);
+public:
+    SortTimerLst();
+    ~SortTimerLst();
+
+    void add_timer(UtilTimer* timer);
+    void adjust_timer(UtilTimer* timer);
+    void del_timer(UtilTimer* timer);
     void tick();
 };
 
@@ -66,24 +67,24 @@ public:
 
     void init(int timeslot);
 
-    int setnonblocking(int fd);
+    int set_non_blocking(int fd);
 
-    void addfd(int epollfd, int fd, bool one_shoot, int TRIGMode);
+    void add_fd(int epollfd, int fd, bool one_shoot, int trig_mode);
 
     static void sig_handler(int sig);
 
-    void addsig(int sig, void(handler)(int), bool restart = true);
+    void add_sig(int sig, void(handler)(int), bool restart = true);
 
     void timer_handler();
 
     void show_error(int connfd, const char* info);
 
     static int* u_pipefd;
-    sort_timer_lst m_timer_lst;
+    SortTimerLst m_timer_lst;
     static int u_epollfd;
-    int m_TIMESLOT;
+    int m_timeslot;
 };
 
-void cb_func(client_data* user_data);
+void cb_func(ClientData* user_data);
 
 #endif

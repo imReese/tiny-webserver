@@ -1,52 +1,52 @@
-#include "lst_timer.h"
-#include "../http/http_conn.h"
+#include "utils/timer/lst_timer.h"
+#include "core/http/http_conn.h"
 
-sort_timer_lst::sort_timer_lst() {
-    head = nullptr;
-    tail = nullptr;
+SortTimerLst::SortTimerLst() {
+    m_head = nullptr;
+    m_tail = nullptr;
 }
 
-sort_timer_lst::~sort_timer_lst() {
-    util_timer* tmp = head;
+SortTimerLst::~SortTimerLst() {
+    UtilTimer* tmp = m_head;
     while (tmp)
     {
-        head = tmp->next;
+        m_head = tmp->next;
         delete tmp;
-        tmp = head;
+        tmp = m_head;
     }
 }
 
-void sort_timer_lst::add_timer(util_timer* timer) {
+void SortTimerLst::add_timer(UtilTimer* timer) {
     if (!timer) {
         return;
     }
-    if (!head) {
-        head = tail = timer;
+    if (!m_head) {
+        m_head = m_tail = timer;
         return;
     }
-    if (timer->expire < head->expire) {
-        timer->next = head;
-        head->prev = timer;
-        head = timer;
+    if (timer->expire < m_head->expire) {
+        timer->next = m_head;
+        m_head->prev = timer;
+        m_head = timer;
         return;
     }
-    add_timer(timer, head);
+    add_timer(timer, m_head);
 }
 
-void sort_timer_lst::adjust_timer(util_timer* timer) {
+void SortTimerLst::adjust_timer(UtilTimer* timer) {
     if (!timer) {
         return;
     }
-    util_timer* tmp = timer->next;
+    UtilTimer* tmp = timer->next;
 
     if (!tmp || (timer->expire < tmp->expire)) {
         return;
     }
-    if (timer == head) {
-        head = head->next;
-        head->prev = nullptr;
+    if (timer == m_head) {
+        m_head = m_head->next;
+        m_head->prev = nullptr;
         timer->next = nullptr;
-        add_timer(timer, head);
+        add_timer(timer, m_head);
     } else {
         timer->prev->next = timer->next;
         timer->next->prev = timer->prev;
@@ -54,25 +54,25 @@ void sort_timer_lst::adjust_timer(util_timer* timer) {
     }
 }
 
-void sort_timer_lst::del_timer(util_timer* timer) {
+void SortTimerLst::del_timer(UtilTimer* timer) {
     if (!timer) {
         return;
     }
-    if ((timer == head) && (timer == tail)) {
+    if ((timer == m_head) && (timer == m_tail)) {
         delete timer;
-        head == nullptr;
-        tail == nullptr;
+        m_head == nullptr;
+        m_tail == nullptr;
         return;
     }
-    if (timer == head) {
-        head = head->next;
-        head->prev = nullptr;
+    if (timer == m_head) {
+        m_head = m_head->next;
+        m_head->prev = nullptr;
         delete timer;
         return;
     }
-    if (timer == tail) {
-        tail = tail->prev;
-        tail->next == nullptr;
+    if (timer == m_tail) {
+        m_tail = m_tail->prev;
+        m_tail->next == nullptr;
         delete timer;
         return;
     }
@@ -81,29 +81,29 @@ void sort_timer_lst::del_timer(util_timer* timer) {
     delete timer;
 }
 
-void sort_timer_lst::tick() {
-    if (!head) {
+void SortTimerLst::tick() {
+    if (!m_head) {
         return;
     }
     time_t cur = time(nullptr);
-    util_timer* tmp = head;
+    UtilTimer* tmp = m_head;
     while (tmp) {
         if (cur < tmp->expire) {
             break;
         }
         tmp->cb_func(tmp->user_data);
-        head = tmp->next;
-        if (head) {
-            head->prev = nullptr;
+        m_head = tmp->next;
+        if (m_head) {
+            m_head->prev = nullptr;
         }
         delete tmp;
-        tmp = head;
+        tmp = m_head;
     }
 }
 
-void sort_timer_lst::add_timer(util_timer* timer, util_timer* lst_head) {
-    util_timer* prev = lst_head;
-    util_timer* tmp = prev->next;
+void SortTimerLst::add_timer(UtilTimer* timer, UtilTimer* lst_head) {
+    UtilTimer* prev = lst_head;
+    UtilTimer* tmp = prev->next;
     while (tmp) {
         if (timer->expire < tmp->expire) {
             prev->next = timer;
@@ -119,26 +119,30 @@ void sort_timer_lst::add_timer(util_timer* timer, util_timer* lst_head) {
         prev->next = timer;
         timer->prev = prev;
         timer->next = nullptr;
-        tail = timer;
+        m_tail = timer;
     }
 }
 
+Utils::Utils() : m_timeslot(0) {}
+
+Utils::~Utils() {}
+
 void Utils::init(int timeslot) {
-    m_TIMESLOT = timeslot;
+    m_timeslot = timeslot;
 }
 
-int Utils::setnonblocking(int fd) {
+int Utils::set_non_blocking(int fd) {
     int old_option = fcntl(fd, F_GETFL);
     int new_option = old_option | O_NONBLOCK;
     fcntl(fd, F_SETFL, new_option);
     return old_option;
 }
 
-void Utils::addfd(int epollfd, int fd, bool one_shot, int TRIGMode) {
+void Utils::add_fd(int epollfd, int fd, bool one_shot, int trig_mode) {
     epoll_event event;
     event.data.fd = fd;
 
-    if (TRIGMode == 1) {
+    if (trig_mode == 1) {
         event.events = EPOLLIN | EPOLLET | EPOLLRDHUP;
     } else {
         event.events = EPOLLIN | EPOLLRDHUP;
@@ -148,7 +152,7 @@ void Utils::addfd(int epollfd, int fd, bool one_shot, int TRIGMode) {
         event.events |= EPOLLONESHOT;
     }
     epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &event);
-    setnonblocking(fd);
+    set_non_blocking(fd);
 }
 
 void Utils::sig_handler(int sig) {
@@ -158,7 +162,7 @@ void Utils::sig_handler(int sig) {
     errno = save_errno;
 }
 
-void Utils::addsig(int sig, void(handler)(int), bool restart) {
+void Utils::add_sig(int sig, void(handler)(int), bool restart) {
     struct sigaction sa;
     memset(&sa, '\0', sizeof(sa));
     sa.sa_handler = handler;
@@ -172,7 +176,7 @@ void Utils::addsig(int sig, void(handler)(int), bool restart) {
 
 void Utils::timer_handler() {
     m_timer_lst.tick();
-    alarm(m_TIMESLOT);
+    alarm(m_timeslot);
 }
 
 void Utils::show_error(int connfd, const char* info) {
@@ -184,9 +188,9 @@ int* Utils::u_pipefd = 0;
 int Utils::u_epollfd = 0;
 
 class Utils;
-void cb_func(client_data* user_data) {
+void cb_func(ClientData* user_data) {
     epoll_ctl(Utils::u_epollfd, EPOLL_CTL_DEL, user_data->sockfd, 0);
     assert(user_data);
     close(user_data->sockfd);
-    http_conn::m_user_count--;
+    HttpConn::m_user_count--;
 }

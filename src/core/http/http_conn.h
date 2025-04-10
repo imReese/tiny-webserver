@@ -21,12 +21,52 @@
 #include <sys/uio.h>
 #include <map>
 
-#include "../lock/locker.h"
-#include "../CGImysql/sql_connection_pool.h"
-#include "../timer/lst_timer.h"
-#include "../log/log.h"
+#include "../../utils/lock/locker.h"
+#include "../../third_party/sql_connection_pool.h"
+#include "../../utils/timer/lst_timer.h"
+#include "../../utils/log/log.h"
+#include "../../utils/block_queue/block_queue.h"
+#include "../../utils/threadpool/threadpool.h"
+#include "../../utils/timer/lst_timer.h"
 
-class http_conn {
+class HttpConn {
+public:
+    static const int FILENAME_LEN = 200;
+    static const int READ_BUFFER_SIZE = 2048;
+    static const int WRITE_BUFFER_SIZE = 1024;
+
+    enum METHOD {
+        GET = 0,
+        POST,
+        HEAD,
+        PUT,
+        DELETE,
+        TRACE,
+        OPTIONS,
+        CONNECT,
+        PATH
+    };
+    enum CHECK_STATE {
+        CHECK_STATE_REQUESTLINE = 0,
+        CHECK_STATE_HEADER,
+        CHECK_STATE_CONTENT
+    };
+    enum HTTP_CODE {
+        NO_REQUEST,
+        GET_REQUEST,
+        BAD_REQUEST,
+        NO_RESOURCE,
+        FORBIDDEN_REQUEST,
+        FILE_REQUEST,
+        INTERNAL_ERROR,
+        CLOSED_CONNECTION
+    };
+    enum LINE_STATUS {
+        LINE_OK = 0,
+        LINE_BAD,
+        LINE_OPEN
+    };
+
 private:
     int m_sockfd;
     sockaddr_in m_address;
@@ -84,49 +124,13 @@ private:
     bool add_blank_line();
 
 public:
-    static const int FILENAME_LEN = 200;
-    static const int READ_BUFFER_SIZE = 2048;
-    static const int WRITE_BUFFER_SIZE = 1024;
-
-    enum METHOD {
-        GET = 0,
-        POST,
-        HEAD,
-        PUT,
-        DELETE,
-        TRACE,
-        OPTIONS,
-        CONNECT,
-        PATH
-    };
-    enum CHECK_STATE {
-        CHECK_STATE_REQUESTLINE = 0,
-        CHECK_STATE_HEADER,
-        CHECK_STATE_CONTENT
-    };
-    enum HTTP_CODE {
-        NO_REQUEST,
-        GET_REQUEST,
-        BAD_REQUEST,
-        NO_RESOURCE,
-        FORBIDDEN_REQUEST,
-        FILE_REQUEST,
-        INTERNAL_ERROR,
-        CLOSED_CONNECTION
-    };
-    enum LINE_STATUS {
-        LINE_OK = 0,
-        LINE_BAD,
-        LINE_OPEN
-    };
-
     static int m_epollfd;
     static int m_user_count;
     MYSQL* mysql;
     int m_state;
 
-    http_conn();
-    ~http_conn();
+    HttpConn();
+    ~HttpConn();
 
     void init(int sockfd, const sockaddr_in& addr, char*, int, int, string user, string passWord, string sqlname);
     void close_conn(bool real_close = true);
@@ -136,9 +140,9 @@ public:
     sockaddr_in* get_address() {
         return &m_address;
     }
-    void initmysql_result(connection_pool* connPool);
+    void init_mysql_result(ConnectionPool* connPool);
     int timer_flag;
     int improv;
-}
+};
 
 #endif

@@ -5,26 +5,28 @@
 #include <cstdio>
 #include <exception>
 #include <pthread.h>
+#include <memory>
+
 #include "../lock/locker.h"
-#include "../CGImysql/sql_connection_pool.h"
+#include "../../third_party/sql_connection_pool.h"
 
 template <typename T>
 class threadpool {
 private:
     int m_thread_number;
     int m_max_requests;
-    pthread_t* m_workqueue;
+    pthread_t* m_threads;
     std::list<T*> m_workqueue;
-    locker m_queuelocker;
-    sem m_queuestat;
-    connection_pool* m_connPool;
+    locker::Mutex m_queuelocker;
+    locker::Semaphore m_queuestat;
+    ConnectionPool* m_connPool;
     int m_actor_model;
 
     static void* worker(void* arg);
     void run();
 
 public:
-    threadpool(int actor_model, connection_pool* connPool, int thread_number = 8, int max_request = 10000);
+    threadpool(int actor_model, ConnectionPool* connPool, int thread_number = 8, int max_request = 10000);
     ~threadpool();
     
     bool append(T* request, int state);
@@ -32,7 +34,7 @@ public:
 };
 
 template <typename T>
-threadpool<T>::threadpool(int actor_model, connection_pool* connPool, int thread_number, int max_requests) : m_actor_model(actor_model), m_thread_number(thread_number), m_max_requests(max_requests), m_threads(nullptr), m_connPool(connPool) {
+threadpool<T>::threadpool(int actor_model, ConnectionPool* connPool, int thread_number, int max_requests) : m_actor_model(actor_model), m_thread_number(thread_number), m_max_requests(max_requests), m_threads(nullptr), m_connPool(connPool) {
     if (thread_number == 0 || max_requests <= 0) {
         throw std::exception();
     }
@@ -110,7 +112,7 @@ void threadpool<T>::run() {
             if (request->m_state == 0) {
                 if (request->read_once()) {
                     request->improv = 1;
-                    connectionRAII mysqlcon(&request->mysql, m_connPool);
+                    ConnectionRAII mysqlcon(&request->mysql, m_connPool);
                     request->process();
                 } else {
                     request->improv = 1;
@@ -125,7 +127,7 @@ void threadpool<T>::run() {
                 }
             }
         } else {
-            connectionRAII mysqlcon(&request->mysql, m_connPool);
+            ConnectionRAII mysqlcon(&request->mysql, m_connPool);
             request->process();
         }
     }
