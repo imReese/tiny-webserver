@@ -75,7 +75,7 @@ private:
     bool validate_actor_model(int actor_model) const;
 
     // 默认值
-    static constexpr int DEFAULT_PORT = 9006;
+    static constexpr int DEFAULT_PORT = 9000;
     static constexpr int DEFAULT_LOG_WRITE = 0;
     static constexpr int DEFAULT_TRIG_MODE = 0;
     static constexpr int DEFAULT_OPT_LINGER = 0;

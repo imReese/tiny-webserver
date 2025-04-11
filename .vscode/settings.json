@@ -49,5 +49,7 @@
         "stdexcept": "cpp",
         "streambuf": "cpp",
         "typeinfo": "cpp"
-    }
+    },
+    "cmake.sourceDirectory": "/home/reese/Project/tiny-webserver/backend",
+    "cmake.buildDirectory": "${workspaceFolder}/backend/build"
 }

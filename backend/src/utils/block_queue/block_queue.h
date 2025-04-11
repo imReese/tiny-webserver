@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include "../utils/lock/locker.h"
+#include "../lock/locker.h"
 
 using namespace std;
 

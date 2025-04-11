@@ -102,6 +102,8 @@ private:
     char sql_passWord[100];
     char sql_name[100];
 
+    ConnectionPool* m_connPool;
+
     void init();
     HTTP_CODE process_read();
     bool process_write(HTTP_CODE ret);
@@ -122,6 +124,12 @@ private:
     bool add_content_length(int content_length);
     bool add_linger();
     bool add_blank_line();
+
+    // 用户认证相关函数
+    bool verify_user(const std::string& username, const std::string& password);
+    bool register_user(const std::string& username, const std::string& password);
+    HTTP_CODE handle_login();
+    HTTP_CODE handle_register();
 
 public:
     static int m_epollfd;

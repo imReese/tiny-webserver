@@ -1,4 +1,4 @@
-#include "config/config.h"
+#include "config.h"
 #include <fstream>
 #include <sstream>
 #include <getopt.h>

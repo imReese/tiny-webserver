@@ -16,18 +16,18 @@ pkg_check_modules(JSONCPP REQUIRED jsoncpp)
 
 # 添加头文件目录
 include_directories(
-    ${PROJECT_SOURCE_DIR}
-    ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_SOURCE_DIR}/src/config
-    ${PROJECT_SOURCE_DIR}/src/core
-    ${PROJECT_SOURCE_DIR}/src/core/http
-    ${PROJECT_SOURCE_DIR}/src/utils
-    ${PROJECT_SOURCE_DIR}/src/utils/block_queue
-    ${PROJECT_SOURCE_DIR}/src/utils/lock
-    ${PROJECT_SOURCE_DIR}/src/utils/log
-    ${PROJECT_SOURCE_DIR}/src/utils/threadpool
-    ${PROJECT_SOURCE_DIR}/src/utils/timer
-    ${PROJECT_SOURCE_DIR}/src/third_party
+    ${PROJECT_SOURCE_DIR}/backend
+    ${PROJECT_SOURCE_DIR}/backend/src
+    ${PROJECT_SOURCE_DIR}/backend/src/config
+    ${PROJECT_SOURCE_DIR}/backend/src/core
+    ${PROJECT_SOURCE_DIR}/backend/src/core/http
+    ${PROJECT_SOURCE_DIR}/backend/src/utils
+    ${PROJECT_SOURCE_DIR}/backend/src/utils/block_queue
+    ${PROJECT_SOURCE_DIR}/backend/src/utils/lock
+    ${PROJECT_SOURCE_DIR}/backend/src/utils/log
+    ${PROJECT_SOURCE_DIR}/backend/src/utils/threadpool
+    ${PROJECT_SOURCE_DIR}/backend/src/utils/timer
+    ${PROJECT_SOURCE_DIR}/backend/src/third_party
     ${MYSQL_INCLUDE_DIRS}
     ${JSONCPP_INCLUDE_DIRS}
 )
